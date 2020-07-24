@@ -48,7 +48,6 @@ function analysis(nlog)
     return mse(cenpdfs,cenpfit),mse(cenpdfs,hist.weights/n)
 end
 # Main analysis
-
 nlogs = 1:8
 
 mses = [analysis(i) for i in nlogs]

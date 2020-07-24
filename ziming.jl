@@ -8,14 +8,15 @@ using StatsBase
 using LinearAlgebra
 
 # Function used
-function gaussian_used(x,mu = 0, sigma = 3)
-    return 1/sqrt(2*pi*sigma^2)*exp(-(x-mu)^2/2/sigma^2)
+function gaussian_unnorm(x,mu = 0, sigma = 3)
+    return exp(-(x-mu)^2/2/sigma^2)
 end
 
 function mse(x,y)
     nx = length(x)
     ny = length(y)
     if (nx!=ny) 
+        println(nx,ny)
         return false
     end
     sq = sum((x-y).*(x-y))
@@ -29,11 +30,11 @@ function analysis(nlog)
     dis = Normal(mu,sigma)
     x = rand(dis,n)
     
-    edge = [i for i in -10:10]
-    center = (edge[2:end]+edge[1:end-1])/2
+    center = [i for i in -10:10]
+    edge = [i for i in -10:(20/21):10] 
     
-    probs = [quadgk(x -> gaussian_used(x), edge[i], edge[i+1], rtol=1e-8)[1] for i in 1:20]
-    cenpdfs = [gaussian_used(cen) for cen in center]
+    cenpdfs = [gaussian_unnorm(cen) for cen in center]
+    cenpdfs./=sum(cenpdfs)
     
     hist = fit(Histogram,x,edge)
     
@@ -41,9 +42,10 @@ function analysis(nlog)
     mumle = norm.μ
     sigmamle = norm.σ
     
-    cenpfit = [gaussian_used(cen,mumle,sigmamle) for cen in center] 
+    cenpfit = [gaussian_unnorm(cen,mumle,sigmamle) for cen in center] 
+    cenpfit./=sum(cenpfit)
     
-    return mse(cenpdfs,cenpfit),mse(probs,hist.weights/n)
+    return mse(cenpdfs,cenpfit),mse(cenpdfs,hist.weights/n)
 end
 # Main analysis
 
@@ -54,7 +56,7 @@ mses = [analysis(i) for i in nlogs]
 mse1 = [mse[1] for mse in mses]
 mse2 = [mse[2] for mse in mses]
 
-plot(nlogs,[mse1,mse2],yaxis=:log, marker=:auto,label = ["Fitted density" "Filled histogram"])
+plot(nlogs,[mse1,mse2],yaxis=:log,label = ["Fitted density" "Filled histogram"])
 
 
 
